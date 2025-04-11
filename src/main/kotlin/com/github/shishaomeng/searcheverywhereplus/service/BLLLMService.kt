@@ -38,7 +38,7 @@ class BLLLMService() {
             .url(url)
             .method("POST", createRequestBody(query))
             .addHeader("Content-Type", mediaType.toString())
-            .addHeader("Authorization", "Bearer sk-c60370ed9e654ea2936a2f57fbabecaf")
+            .addHeader("Authorization", "Bearer aks.NzM2NzA3NzM3NzM3NzM3NzM3.NzM2NzA3NzM3NzM3NzM3NzM3")
             .build()
 
         return try {
