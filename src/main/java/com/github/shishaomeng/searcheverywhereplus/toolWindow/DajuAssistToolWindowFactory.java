@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 
 final class DajuAssistToolWindowFactory implements ToolWindowFactory, DumbAware {
 
+  static final String CHAT_URL = "https://agent.dingtalk.com/copilot?code=dSpQ69035G";
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -34,13 +35,21 @@ final class DajuAssistToolWindowFactory implements ToolWindowFactory, DumbAware 
       return;
     }
 
+    // 将面板添加到工具窗口的内容中
+    Content content = ContentFactory.getInstance().createContent(createChatPanel(), "问答", false);
+    // 将面板添加到工具窗口的内容中
+    Content content2 = ContentFactory.getInstance().createContent(createOpsPanel(), "运维", false);
+    toolWindow.getContentManager().addContent(content);
+    toolWindow.getContentManager().addContent(content2);
+  }
 
+  private @NotNull JPanel createChatPanel() {
     // 创建一个面板来容纳浏览器组件和刷新按钮
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel chatPanel = new JPanel(new BorderLayout());
     // 创建一个 JBCefBrowser 实例
     JBCefBrowser browser = new JBCefBrowser();
     // 将浏览器组件添加到面板中
-    panel.add(browser.getComponent(), BorderLayout.CENTER);
+    chatPanel.add(browser.getComponent(), BorderLayout.CENTER);
 
     // 创建刷新按钮
     JButton refreshButton = new JButton("刷新");
@@ -49,25 +58,25 @@ final class DajuAssistToolWindowFactory implements ToolWindowFactory, DumbAware 
     // 刷新按钮的点击事件
     refreshButton.addActionListener(e -> {
       refreshButton.setVisible(false);
-      browser.loadURL("https://agent.dingtalk.com/copilot?code=dSpQ69035G");
+      browser.loadURL(CHAT_URL);
     });
 
     // 将刷新按钮添加到面板的底部
-    panel.add(refreshButton, BorderLayout.SOUTH);
+    chatPanel.add(refreshButton, BorderLayout.SOUTH);
 
     // 增加页面加载处理器
     addPageLoadHandler(browser, refreshButton);
 
     // 加载指定的 URL
-    browser.loadURL("https://agent.dingtalk.com/copilot?code=dSpQ69035G");
+    browser.loadURL(CHAT_URL);
+    return chatPanel;
+  }
 
-    // 将面板添加到工具窗口的内容中
-    Content content = ContentFactory.getInstance().createContent(panel, "智能问答", false);
-    // 将面板添加到工具窗口的内容中
-    Content content2 = ContentFactory.getInstance().createContent(panel, "智能运维", false);
-    toolWindow.getContentManager().addContent(content);
-    toolWindow.getContentManager().addContent(content2);
-
+  private @NotNull JPanel createOpsPanel() {
+    JPanel opsPanel = new JPanel(new BorderLayout());
+    JLabel label = new JLabel("敬请期待");
+    opsPanel.add(label, BorderLayout.CENTER);
+    return opsPanel;
   }
 
   /**

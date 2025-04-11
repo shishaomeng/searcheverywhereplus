@@ -47,31 +47,32 @@ import javax.swing.*
 class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchResult>,
     SearchEverywhereExtendedInfoProvider,
     SearchEverywherePreviewProvider {
+    private val searchIcon = IconLoader.getIcon("/icons/search/taobao.svg", javaClass)
+    private val aiSearchIcon = IconLoader.getIcon("/icons/search/aisearch2.svg", javaClass)
+    private val deepSeekIcon = IconLoader.getIcon("/icons/search/deepseek.svg", javaClass)
+    private var dajuIcon = IconLoader.getIcon("/icons/search/daju.svg", javaClass)
 
-    val searchIcon= IconLoader.getIcon("/icons/taobao.svg", javaClass)
-    val aiSearchIcon= IconLoader.getIcon("/icons/aisearch2.svg", javaClass)
-    val deepSeekIcon= IconLoader.getIcon("/icons/deepseek.svg", javaClass)
-    var dajuIcon = IconLoader.getIcon("/icons/daju2.svg", javaClass)
-
-    val workBaseUrl = "https://work.alibaba-inc.com/nwpipe/newsearch?type=all&keywords="
-    val codeBaseUrl = "https://code.alibaba-inc.com/dashboard/search?type=code&q="
+    private val workBaseUrl = "https://work.alibaba-inc.com/nwpipe/newsearch?type=all&keywords="
+    private val codeBaseUrl = "https://code.alibaba-inc.com/dashboard/search?type=code&q="
 
     private val currentProject: Project = event.project ?: throw IllegalStateException("Project is null")
 
     private val client = BLLLMService()
 
     override fun getSearchProviderId(): String = "DeepSeekProvider"
-    override fun getGroupName(): String = "Smart Search"
+    override fun getGroupName(): String = "客运内外"
     override fun getSortWeight(): Int = 10
 
     override fun processSelectedItem(selected: SearchResult, p1: Int, p2: String): Boolean {
         when (selected.action.type) {
             "openBrowser" -> {
-                selected.action.param?.let { openBrowser(it) }
+                selected.action.param.let { openBrowser(it) }
             }
+
             "openToolWindow" -> {
                 openToolWindow(selected.action.param)
             }
+
             "showLLMDialog" -> {
                 showLLMDialog(selected)
             }
@@ -79,22 +80,7 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
         return true
     }
 
-    private fun openBrowser(url: String){
-        val desktop: Desktop? = if (Desktop.isDesktopSupported()) Desktop.getDesktop() else null
-        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
-            try {
-                desktop.browse(URI.create(url))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
 
-    private fun openToolWindow(toolWindowId: String) {
-        val toolWindowManager = ToolWindowManager.getInstance(currentProject)
-        val toolWindow: ToolWindow? = toolWindowManager.getToolWindow(toolWindowId)
-        toolWindow?.show()
-    }
 
     override fun showInFindResults(): Boolean = true
     override fun isShownInSeparateTab(): Boolean = true
@@ -105,10 +91,10 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
         consumer: Processor<in FoundItemDescriptor<SearchResult>>
     ) {
         val items = listOf(
-            SearchResult("内外搜索 ", pattern, "跳转内网", Action("openBrowser", workBaseUrl + pattern, searchIcon)),
-            SearchResult("代码搜索 ", pattern, "跳转内网", Action("openBrowser", codeBaseUrl + pattern, searchIcon)),
-            SearchResult("问问大局 ", pattern, "AI 助理", Action("openToolWindow", "Daju Assist", dajuIcon)),
-            SearchResult("智能搜索 ", pattern, deepSeekIcon, Action("showLLMDialog", pattern, aiSearchIcon)),
+            SearchResult("搜内外 ", pattern, "Jump to Alibaba Work", Action("openBrowser", workBaseUrl + pattern, searchIcon)),
+            SearchResult("搜代码 ", pattern, "Jump to Alibaba Code", Action("openBrowser", codeBaseUrl + pattern, searchIcon)),
+//            SearchResult("问大局 ", pattern, "Search internal RD knowledge", Action("openToolWindow", "Daju Assist", dajuIcon)),
+            SearchResult("AI搜索 ", pattern, deepSeekIcon, Action("showLLMDialog", pattern, aiSearchIcon)),
         )
         items.forEach({
             consumer.process(
@@ -127,8 +113,13 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
     override fun getDataForItem(element: SearchResult, dataId: String): Any? = null
 
     override fun createExtendedInfo(): ExtendedInfo {
-        val description = fun(it: Any): String? { return "由客户运营技术部提供支持" }
-        val shortcut = fun(it: Any?): AnAction? { return null}
+        val description = fun(_: Any): String { return "由客户运营技术提供支持" }
+        val shortcut = fun(_: Any?): AnAction { return OpenToolWindowAction(
+            "Talk to Daju Assistant",
+            icon = AllIcons.Actions.Search,
+            twId = "Daju"
+        )}
+
         return ExtendedInfo(description, shortcut)
     }
 
@@ -141,7 +132,8 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
 
         // 创建 JDialog
         JDialog().apply {
-            title = "智能搜索 >>>  ${if (item.searchText.length > 30) "${item.searchText.take(30)}..." else item.searchText}"
+            title =
+                "智能搜索 >>>  ${if (item.searchText.length > 30) "${item.searchText.take(30)}..." else item.searchText}"
             contentPane = JPanel(BorderLayout()).apply {
                 add(loadingPanel, BorderLayout.CENTER)
             }
@@ -188,7 +180,7 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
                             }, BorderLayout.CENTER)
                             add(JButton("重试", AllIcons.Actions.Refresh).apply {
                                 preferredSize = Dimension(100, 30)
-                                addActionListener {performQuery()}
+                                addActionListener { performQuery() }
                             }, BorderLayout.AFTER_LAST_LINE)
                         }
                         loadingPanel.add(errorPanel, BorderLayout.CENTER)
@@ -239,7 +231,7 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
         }
 
         // 设置 HTML 内容
-        browser.loadHTML(createFullHtml(query,response,contentHtml))
+        browser.loadHTML(createFullHtml(query, response, contentHtml))
 
         return browser.component
     }
@@ -252,7 +244,7 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
      * @param markdownHtml Markdown文本生成的 HTML
      * @return 完整的 HTML
      */
-    private fun createFullHtml(query: String,response: ChatCompletionResponse,markdownHtml: String): String {
+    private fun createFullHtml(query: String, response: ChatCompletionResponse, markdownHtml: String): String {
 
         val templateStream: InputStream = javaClass.getResourceAsStream("/ai_search_result_page.html")
             ?: return "ai_search_result_page not found"
@@ -265,5 +257,23 @@ class AiSearchEverywhereContributor(event: AnActionEvent) : WeightedSearchEveryw
             .replace("{completionTokens}", response.usage.completion_tokens.toString())
             .replace("{totalTokens}", response.usage.total_tokens.toString())
             .replace("{markdownHtml}", markdownHtml)
+    }
+
+
+    private fun openBrowser(url: String) {
+        val desktop: Desktop? = if (Desktop.isDesktopSupported()) Desktop.getDesktop() else null
+        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+            try {
+                desktop.browse(URI.create(url))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun openToolWindow(toolWindowId: String) {
+        val toolWindowManager = ToolWindowManager.getInstance(currentProject)
+        val toolWindow: ToolWindow? = toolWindowManager.getToolWindow(toolWindowId)
+        toolWindow?.show()
     }
 }

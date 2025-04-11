@@ -9,7 +9,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <searchEverywhereContributor implementation="com.github.shishaomeng.searcheverywhereplus.contributor.AiSearchContributorFactory"/>
 
-        <toolWindow id="Daju Assist" secondary="true" icon="AllIcons.Toolwindows.WebToolWindow" anchor="right"
+        <toolWindow id="Daju" secondary="true" anchor="right" icon="icons/toolwindow/daju13*13white.svg"
                     factoryClass="com.github.shishaomeng.searcheverywhereplus.toolWindow.DajuAssistToolWindowFactory"/>
     </extensions>
 </idea-plugin>
